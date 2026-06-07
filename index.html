@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go for .NET Engineers</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="index">
+  <div class="site-shell">
+    <header class="hero">
+      <div class="eyebrow">Learning Track</div>
+      <h1>Go tutorial cho .NET developer</h1>
+      <p class="hero-copy">
+        Lộ trình nhập môn Go dành riêng cho người đã quen tư duy C#, ASP.NET Core và clean architecture.
+        Mục tiêu là giúp bạn học từ đầu nhưng vẫn nói đúng “ngôn ngữ” của một senior .NET engineer.
+      </p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="lesson-01-foundations.html">Bắt đầu từ Bài 1</a>
+        <a class="button button-secondary" href="#roadmap">Xem lộ trình</a>
+      </div>
+      <div class="hero-grid">
+        <article class="stat-card">
+          <span class="stat-label">Bài học</span>
+          <strong>12 bài hoàn chỉnh</strong>
+          <p>Từ nhập môn cú pháp tới database, middleware, testing, deployment và production operations.</p>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Định hướng</span>
+          <strong>.NET-first</strong>
+          <p>Mỗi bài đều có phần map tư duy từ C# sang Go để giảm ma sát khi học.</p>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Kết quả</span>
+          <strong>Xây mental model đúng</strong>
+          <p>Không học thuộc syntax rời rạc, mà hiểu cách Go muốn bạn thiết kế phần mềm.</p>
+        </article>
+      </div>
+    </header>
+
+    <main class="content-stack">
+      <section class="panel" id="roadmap">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Roadmap</div>
+            <h2>Học tuần tự như một track onboarding</h2>
+          </div>
+          <div class="progress-chip">
+            <span id="progress-count">0 / 12</span>
+            <small>đã mở</small>
+          </div>
+        </div>
+
+        <div class="lesson-list">
+          <a class="lesson-card" href="lesson-01-foundations.html" data-lesson>
+            <span class="lesson-index">01</span>
+            <div>
+              <h3>Go mindset cho .NET developer</h3>
+              <p>Hiểu vì sao Go tối giản, khác gì với C#, và nên bỏ những thói quen OOP nào.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-02-setup-tooling.html" data-lesson>
+            <span class="lesson-index">02</span>
+            <div>
+              <h3>Cài đặt, module, tooling</h3>
+              <p>Thiết lập môi trường, dùng `go mod`, chạy project, format, lint và debug hiệu quả.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-03-syntax-control-flow.html" data-lesson>
+            <span class="lesson-index">03</span>
+            <div>
+              <h3>Cú pháp nền tảng và control flow</h3>
+              <p>Biến, constant, function, slice, map, loop, `if`, `switch`, `defer` và idiom cơ bản.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-04-types-structs-interfaces.html" data-lesson>
+            <span class="lesson-index">04</span>
+            <div>
+              <h3>Struct, method, interface</h3>
+              <p>Tư duy composition thay inheritance, interface ngầm định và cách model domain trong Go.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-05-errors-packages-testing.html" data-lesson>
+            <span class="lesson-index">05</span>
+            <div>
+              <h3>Error handling, package, testing</h3>
+              <p>Làm quen với cách Go xử lý lỗi, tổ chức package, viết unit test và table-driven tests.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-06-concurrency-http-project.html" data-lesson>
+            <span class="lesson-index">06</span>
+            <div>
+              <h3>Concurrency, HTTP và mini service</h3>
+              <p>Goroutine, channel, context, net/http và cách build một service nhỏ theo phong cách Go.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-07-json-config-logging.html" data-lesson>
+            <span class="lesson-index">07</span>
+            <div>
+              <h3>JSON, config, environment, logging</h3>
+              <p>Bind request/response, đọc config từ env, tổ chức app settings và structured logging theo kiểu Go.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-08-database-sql-transactions.html" data-lesson>
+            <span class="lesson-index">08</span>
+            <div>
+              <h3>Database, SQL, transaction</h3>
+              <p>Làm việc với `database/sql`, query, scan, transaction boundary và cách nghĩ khác Entity Framework.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-09-project-structure-dependency-wiring.html" data-lesson>
+            <span class="lesson-index">09</span>
+            <div>
+              <h3>Project structure và dependency wiring</h3>
+              <p>Tổ chức project thực chiến, constructor injection bằng tay và cách áp clean architecture vừa đủ trong Go.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-10-middleware-auth-observability.html" data-lesson>
+            <span class="lesson-index">10</span>
+            <div>
+              <h3>Middleware, auth, observability</h3>
+              <p>Xây pipeline cho HTTP service với middleware, request ID, auth cơ bản, metrics, tracing và graceful shutdown.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-11-integration-testing-benchmarking.html" data-lesson>
+            <span class="lesson-index">11</span>
+            <div>
+              <h3>Integration testing, benchmark, profiling</h3>
+              <p>Test service thật, chạy benchmark, dùng race detector và profile để tối ưu đúng chỗ.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+
+          <a class="lesson-card" href="lesson-12-deployment-performance-roadmap.html" data-lesson>
+            <span class="lesson-index">12</span>
+            <div>
+              <h3>Deployment, performance, roadmap tiếp theo</h3>
+              <p>Đóng gói binary, containerize, tinh chỉnh production runtime và định hướng học Go sâu hơn sau series.</p>
+            </div>
+            <span class="lesson-status">Mở bài</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="panel split-panel">
+        <article>
+          <div class="eyebrow">Why This Track</div>
+          <h2>Không dạy Go như một người mới lập trình</h2>
+          <p>
+            Bạn đã là senior .NET developer, nên điều quan trọng không phải là “biến là gì” mà là
+            “Go muốn tôi trade-off gì so với C#?”. Vì vậy bộ bài này ưu tiên mental model, idiom,
+            và các quyết định thiết kế có tính thực chiến.
+          </p>
+        </article>
+
+        <article>
+          <div class="eyebrow">What To Expect</div>
+          <ul class="feature-list">
+            <li>Mỗi bài có phần tương quan trực tiếp giữa C# và Go.</li>
+            <li>Nội dung đi từ nhập môn tới production-grade backend service.</li>
+            <li>Thiết kế dạng editorial để đọc lâu vẫn dễ theo dõi.</li>
+          </ul>
+        </article>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

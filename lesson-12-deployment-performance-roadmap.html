@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 12 - Deployment, performance, roadmap tiếp theo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-12-deployment-performance-roadmap.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 12</div>
+      <h1>Deployment, performance, roadmap tiếp theo</h1>
+      <p class="hero-copy">
+        Bài cuối khép lại series bằng góc nhìn vận hành và phát triển dài hạn:
+        build binary, container hóa, tinh chỉnh runtime, và cách tiếp tục đi sâu để dùng Go tự tin trong production.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: production readiness</div>
+        <div class="meta-chip">Điểm nhấn: deploy đơn giản</div>
+        <div class="meta-chip">Mục tiêu: roadmap sau series</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-11-integration-testing-benchmarking.html">Quay lại Bài 11</a>
+        <a class="button button-primary" href="index.html">Về trang chủ</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Build và container</li>
+            <li>Runtime tuning</li>
+            <li>Go phù hợp khi nào</li>
+            <li>Roadmap học tiếp</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Deployment</div>
+          <h2>Một trong những điểm mạnh rõ nhất của Go là deployment rất thẳng</h2>
+          <ul class="bullet-list">
+            <li>Build ra binary đơn, dễ đóng gói vào container nhỏ.</li>
+            <li>Startup nhanh, đặc biệt phù hợp cho job, worker, internal API và microservice.</li>
+            <li>Ít phụ thuộc runtime setup phức tạp ở môi trường đích.</li>
+          </ul>
+          <div class="code-block" data-label="build-and-run.txt">
+            <pre><code>go build -o app ./cmd/api
+./app
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Performance</div>
+          <h2>Tối ưu Go cũng cần kỷ luật như tối ưu .NET: đo trước, sửa sau</h2>
+          <p>
+            Việc Go nhanh không có nghĩa mọi code Go đều tự động hiệu quả. Allocation thừa, query dở, log quá nặng,
+            goroutine vô tội vạ hoặc contention cao vẫn khiến hệ thống xuống sức như thường.
+          </p>
+          <div class="quote">
+            <strong>Nguyên tắc giữ bình tĩnh:</strong>
+            Đừng tối ưu vì ngôn ngữ “có vẻ nhanh”. Hãy tối ưu vì profile cho thấy điểm nghẽn cụ thể.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Choosing Go</div>
+          <h2>Khi nào nên chọn Go thay vì tiếp tục ở lại .NET</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Go rất hợp</th>
+                <th>.NET vẫn rất mạnh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Microservice và infra tooling</td>
+                <td>Rất hợp</td>
+                <td>Vẫn tốt nếu team và platform đang đồng nhất .NET</td>
+              </tr>
+              <tr>
+                <td>Enterprise app framework-heavy</td>
+                <td>Không luôn là lựa chọn số 1</td>
+                <td>.NET thường giàu ecosystem hơn</td>
+              </tr>
+              <tr>
+                <td>Cloud-native worker, gateway, background job</td>
+                <td>Thường rất đáng cân nhắc</td>
+                <td>.NET cũng làm được, nhưng Go thường cho cảm giác tối giản hơn</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Roadmap</div>
+          <h2>Sau series này, bạn nên làm gì để giỏi Go thật sự</h2>
+          <ul class="bullet-list">
+            <li>Tự build một service CRUD hoàn chỉnh có auth, SQL, migrations, structured logging và integration test.</li>
+            <li>Đọc vài codebase Go production để quen naming, package boundary và error flow thực tế.</li>
+            <li>Học thêm gRPC, message queue, cache, OpenTelemetry và CI/CD cho service Go.</li>
+            <li>So sánh lại các quyết định kiến trúc bạn thường làm trong .NET và hỏi: ở Go, cái nào thật sự còn cần?</li>
+          </ul>
+          <div class="callout">
+            <strong>Kết luận cuối cùng</strong>
+            Nếu C# cho bạn sức mạnh biểu đạt và hệ sinh thái dày, thì Go cho bạn sự đơn giản vận hành và tốc độ đưa service vào production.
+            Biết cả hai sẽ khiến bạn chọn công cụ tỉnh táo hơn cho từng bài toán.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-11-integration-testing-benchmarking.html">
+              <span>Bài trước</span>
+              <strong>Integration testing, benchmark, profiling</strong>
+            </a>
+            <a href="index.html">
+              <span>Hoàn thành series</span>
+              <strong>Quay về roadmap tổng</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

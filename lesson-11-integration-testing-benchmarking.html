@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 11 - Integration testing, benchmark, profiling</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-11-integration-testing-benchmarking.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 11</div>
+      <h1>Integration testing, benchmark, profiling</h1>
+      <p class="hero-copy">
+        Production quality không chỉ là compile pass. Bài này giúp bạn kiểm thử service theo cách thực tế hơn:
+        chạy integration tests, benchmark, race detector và profile để nhìn đúng vấn đề hiệu năng.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: quality engineering</div>
+        <div class="meta-chip">Điểm nhấn: test gần thực tế</div>
+        <div class="meta-chip">Mục tiêu: tối ưu có số liệu</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-10-middleware-auth-observability.html">Quay lại Bài 10</a>
+        <a class="button button-primary" href="lesson-12-deployment-performance-roadmap.html">Tới Bài 12</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Unit vs integration tests</li>
+            <li>HTTP test server</li>
+            <li>Benchmark và race detector</li>
+            <li>Profiling</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Testing Strategy</div>
+          <h2>Đừng chỉ test hàm nhỏ, hãy test cả luồng request thật</h2>
+          <p>
+            Vì Go code thường explicit và ít framework magic, integration test bằng HTTP test server tương đối nhẹ.
+            Đây là cơ hội tốt để kiểm thử gần production hơn mà không cần harness quá đồ sộ.
+          </p>
+          <div class="code-block" data-label="handler_integration_test.go">
+            <pre><code>server := httptest.NewServer(mux)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/health")
+if err != nil {
+    t.Fatal(err)
+}
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Benchmarks</div>
+          <h2>Go benchmark rất tiện để đo chi phí của hot path</h2>
+          <div class="code-block" data-label="bench_test.go">
+            <pre><code>func BenchmarkNormalizeEmail(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        NormalizeEmail(" Demo@Example.com ")
+    }
+}
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Benchmark tốt khi bạn đã có giả thuyết về bottleneck.</li>
+            <li>Đừng benchmark cả hệ thống một cách mù mờ rồi rút kết luận lớn.</li>
+            <li>Ưu tiên benchmark hàm thuần, parser, serializer hoặc đoạn xử lý được gọi cực nhiều.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Race Detector</div>
+          <h2>`go test -race` là công cụ rất nên bật với code concurrent</h2>
+          <p>
+            Với bài toán goroutine, shared state và cache, race detector có thể giúp bạn bắt bug mà code review rất dễ bỏ sót.
+            Đây là một lợi thế lớn trong runtime/tooling của Go, đặc biệt khi service của bạn bắt đầu có background workers.
+          </p>
+          <div class="callout">
+            <strong>Thói quen tốt</strong>
+            Mỗi khi chạm vào concurrency đáng kể, hãy chạy test với race detector ít nhất ở local hoặc CI cho vùng code đó.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Profiling</div>
+          <h2>Chỉ tối ưu sau khi đã có profile hoặc số liệu đủ tin cậy</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Công cụ</th>
+                <th>Mục đích</th>
+                <th>Khi dùng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Benchmark</td>
+                <td>Đo throughput/latency của đoạn code nhỏ</td>
+                <td>Khi nghi ngờ hot path cụ thể</td>
+              </tr>
+              <tr>
+                <td>Race detector</td>
+                <td>Bắt data race</td>
+                <td>Khi có shared mutable state hoặc goroutine phức tạp</td>
+              </tr>
+              <tr>
+                <td>Profiler</td>
+                <td>Xem CPU, memory, allocation</td>
+                <td>Khi service chậm hoặc tốn tài nguyên thật</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-10-middleware-auth-observability.html">
+              <span>Bài trước</span>
+              <strong>Middleware, auth, observability</strong>
+            </a>
+            <a href="lesson-12-deployment-performance-roadmap.html">
+              <span>Bài tiếp theo</span>
+              <strong>Deployment, performance, roadmap tiếp theo</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

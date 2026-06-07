@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 4 - Struct, method, interface</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-04-types-structs-interfaces.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 04</div>
+      <h1>Struct, method, interface</h1>
+      <p class="hero-copy">
+        Đây là bài quan trọng nhất nếu bạn đến từ thế giới OOP mạnh. Go không xoá abstraction,
+        nhưng nó muốn abstraction nhẹ hơn, muộn hơn và gần nơi sử dụng hơn.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: type system</div>
+        <div class="meta-chip">Điểm nhấn: composition</div>
+        <div class="meta-chip">Chuyển đổi tư duy từ class sang struct</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-03-syntax-control-flow.html">Quay lại Bài 3</a>
+        <a class="button button-primary" href="lesson-05-errors-packages-testing.html">Tới Bài 5</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Struct và method</li>
+            <li>Pointer receiver</li>
+            <li>Interface ngầm định</li>
+            <li>Composition over inheritance</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Structs</div>
+          <h2>`struct` là viên gạch chính để model dữ liệu</h2>
+          <div class="code-block" data-label="user.go">
+            <pre><code>type User struct {
+    ID    int
+    Name  string
+    Email string
+}
+
+func (u User) DisplayName() string {
+    return fmt.Sprintf("%d - %s", u.ID, u.Name)
+}
+</code></pre>
+          </div>
+          <p>
+            Bạn có method gắn với type, nhưng không có class theo kiểu C#. Điều này khiến model trong Go “phẳng” hơn,
+            ít ceremony hơn và thường dễ đọc hơn ở codebase service-oriented.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Receivers</div>
+          <h2>Hiểu value receiver và pointer receiver là bắt buộc</h2>
+          <div class="code-block" data-label="receivers.go">
+            <pre><code>type Counter struct {
+    Value int
+}
+
+func (c *Counter) Increment() {
+    c.Value++
+}
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Value receiver phù hợp khi dữ liệu nhỏ, immutable hoặc bạn cố ý không sửa state.</li>
+            <li>Pointer receiver dùng khi cần mutate state hoặc tránh copy dữ liệu lớn.</li>
+            <li>Trong thực tế service/backend, pointer receiver xuất hiện khá thường xuyên.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Interfaces</div>
+          <h2>Go interface được implement ngầm định, không cần khai báo trước</h2>
+          <div class="code-block" data-label="interfaces.go">
+            <pre><code>type EmailSender interface {
+    Send(to string, subject string, body string) error
+}
+
+type SmtpSender struct {}
+
+func (s SmtpSender) Send(to string, subject string, body string) error {
+    return nil
+}
+</code></pre>
+          </div>
+          <p>
+            `SmtpSender` không cần viết thêm câu nào để “declare implements EmailSender”. Nếu method set khớp,
+            nó tự thoả interface. Đây là khác biệt rất lớn với C#, và nó giúp decouple theo hướng nhẹ hơn.
+          </p>
+          <div class="callout">
+            <strong>Rule of thumb</strong>
+            Trong Go, thường để consumer định nghĩa interface mà nó cần, thay vì provider publish interface rất sớm.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Composition</div>
+          <h2>Hãy nghĩ theo composition trước, inheritance gần như không còn là công cụ chính</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Bài toán</th>
+                <th>C# thường làm</th>
+                <th>Go thường làm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Chia sẻ hành vi</td>
+                <td>Base class / abstract class</td>
+                <td>Embedding, helper function, interface nhỏ</td>
+              </tr>
+              <tr>
+                <td>Tách dependency</td>
+                <td>Interface + DI container</td>
+                <td>Constructor đơn giản + interface phía consumer</td>
+              </tr>
+              <tr>
+                <td>Domain model</td>
+                <td>Rich entities nhiều method</td>
+                <td>Struct rõ ràng, service logic explicit hơn</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Go không cấm abstraction, nhưng nó không thưởng cho abstraction sớm. Bạn sẽ có code tốt hơn khi bắt đầu
+            từ concrete type, rồi mới rút interface ở nơi thật sự cần mock, swap implementation hoặc giảm coupling.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Takeaway</div>
+          <h2>Những câu nên tự nhắc khi thiết kế bằng Go</h2>
+          <ul class="bullet-list">
+            <li>Tôi có thật sự cần interface chưa, hay concrete type hiện tại đã đủ?</li>
+            <li>Tôi đang cố tái tạo inheritance vì thói quen, hay đây là nhu cầu chính đáng?</li>
+            <li>API này có đơn giản và đọc một lần là hiểu không?</li>
+            <li>Receiver của tôi nên là value hay pointer?</li>
+          </ul>
+
+          <div class="next-nav">
+            <a href="lesson-03-syntax-control-flow.html">
+              <span>Bài trước</span>
+              <strong>Cú pháp nền tảng và control flow</strong>
+            </a>
+            <a href="lesson-05-errors-packages-testing.html">
+              <span>Bài tiếp theo</span>
+              <strong>Error handling, package, testing</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

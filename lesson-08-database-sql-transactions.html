@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 8 - Database, SQL, transaction</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-08-database-sql-transactions.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 08</div>
+      <h1>Database, SQL, transaction</h1>
+      <p class="hero-copy">
+        Với người đến từ Entity Framework, đây là bước chuyển tư duy rất lớn. Go khuyến khích bạn gần SQL hơn,
+        hiểu transaction boundary rõ hơn và chấp nhận explicit data access thay vì dựa nhiều vào ORM abstraction.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: persistence</div>
+        <div class="meta-chip">Điểm nhấn: SQL-first</div>
+        <div class="meta-chip">Mục tiêu: transaction rõ boundary</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-07-json-config-logging.html">Quay lại Bài 7</a>
+        <a class="button button-primary" href="lesson-09-project-structure-dependency-wiring.html">Tới Bài 9</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>`database/sql` là gì</li>
+            <li>Query và scan</li>
+            <li>Transaction boundary</li>
+            <li>Khi nào cần abstraction</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">SQL-first</div>
+          <h2>Trong Go, biết SQL tốt thường quan trọng hơn biết một ORM kỳ diệu</h2>
+          <p>
+            Bạn vẫn có thể dùng ORM hoặc query builder, nhưng nền tảng của hệ sinh thái Go là `database/sql`.
+            Nó cho bạn control rõ ràng hơn về query, connection pool, transaction và mapping dữ liệu.
+          </p>
+          <div class="quote">
+            <strong>Chuyển mental model:</strong>
+            Từ “domain model dẫn dắt query” sang “query dẫn dắt shape dữ liệu mà use case cần”.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Query</div>
+          <h2>Đọc dữ liệu bằng query explicit và scan vào struct nhỏ</h2>
+          <div class="code-block" data-label="users_repo.go">
+            <pre><code>row := db.QueryRowContext(ctx,
+    `select id, name, email from users where id = $1`,
+    id,
+)
+
+var user User
+if err := row.Scan(&amp;user.ID, &amp;user.Name, &amp;user.Email); err != nil {
+    return User{}, err
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu so với EF Core, phần này ít “developer comfort” hơn nhưng lại rất minh bạch: bạn biết chính xác
+            query gì chạy, cột nào được đọc, object nào được map, và chi phí truy cập nằm ở đâu.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Transactions</div>
+          <h2>Transaction nên gắn với use case, không gắn mù quáng với từng repository call</h2>
+          <div class="code-block" data-label="transactions.go">
+            <pre><code>tx, err := db.BeginTx(ctx, nil)
+if err != nil {
+    return err
+}
+defer tx.Rollback()
+
+if err := ordersRepo.Insert(ctx, tx, order); err != nil {
+    return err
+}
+
+if err := auditRepo.Insert(ctx, tx, auditEvent); err != nil {
+    return err
+}
+
+return tx.Commit()
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Transaction là concern của application flow hoặc use case, không chỉ của database helper.</li>
+            <li>Đừng mở transaction quá sớm rồi giữ quá lâu qua I/O ngoài database.</li>
+            <li>Nếu cần atomicity, hãy làm cho boundary đó thật lộ rõ trong code.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Abstraction</div>
+          <h2>Khi nào nên thêm repository abstraction mạnh hơn</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Khuyến nghị</th>
+                <th>Lý do</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Service nhỏ, query ít</td>
+                <td>Giữ repository mỏng</td>
+                <td>Giảm ceremony, dễ lần theo query thật.</td>
+              </tr>
+              <tr>
+                <td>Logic persistence phức tạp</td>
+                <td>Tách repository rõ hơn</td>
+                <td>Dễ thay đổi và test theo capability.</td>
+              </tr>
+              <tr>
+                <td>Nhiều query lặp lại</td>
+                <td>Dùng helper hoặc code generation</td>
+                <td>Giảm boilerplate nhưng vẫn giữ SQL visible.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-07-json-config-logging.html">
+              <span>Bài trước</span>
+              <strong>JSON, config, environment, logging</strong>
+            </a>
+            <a href="lesson-09-project-structure-dependency-wiring.html">
+              <span>Bài tiếp theo</span>
+              <strong>Project structure và dependency wiring</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

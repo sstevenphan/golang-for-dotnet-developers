@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 9 - Project structure và dependency wiring</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-09-project-structure-dependency-wiring.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 09</div>
+      <h1>Project structure và dependency wiring</h1>
+      <p class="hero-copy">
+        Đây là bài trả lời câu hỏi mà nhiều senior .NET developer sẽ hỏi rất sớm:
+        “Nếu không có solution nhiều project và DI container mạnh tay, tôi tổ chức code thế nào cho sạch?”
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: architecture</div>
+        <div class="meta-chip">Điểm nhấn: constructor wiring</div>
+        <div class="meta-chip">Mục tiêu: clean vừa đủ</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-08-database-sql-transactions.html">Quay lại Bài 8</a>
+        <a class="button button-primary" href="lesson-10-middleware-auth-observability.html">Tới Bài 10</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Package theo boundary</li>
+            <li>Constructor injection bằng tay</li>
+            <li>Clean architecture vừa đủ</li>
+            <li>Khi nào project bị over-engineered</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Structure</div>
+          <h2>Bắt đầu từ package theo capability, đừng tái tạo nguyên solution tree của .NET</h2>
+          <div class="code-block" data-label="example-layout.txt">
+            <pre><code>/cmd/api
+/internal/user
+/internal/order
+/internal/platform/db
+/internal/platform/httpserver
+</code></pre>
+          </div>
+          <p>
+            Một project Go production tốt thường có ít tầng hình thức hơn bạn quen trong .NET.
+            Điều quan trọng là dependency direction rõ, package name gọn, và người đọc nhìn vào là đoán được trách nhiệm.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Wiring</div>
+          <h2>Constructor injection bằng tay thường đã đủ cho đa số service</h2>
+          <div class="code-block" data-label="wire.go">
+            <pre><code>userRepo := user.NewRepository(db)
+userService := user.NewService(userRepo, logger)
+userHandler := user.NewHandler(userService, logger)
+</code></pre>
+          </div>
+          <p>
+            Đúng là bạn mất tính “auto resolve” của DI container, nhưng bạn có được một composition root cực rõ.
+            Điều này giúp debug dependency graph nhanh hơn và tránh framework coupling không cần thiết.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Architecture</div>
+          <h2>Clean architecture trong Go nên là discipline, không phải nghi thức</h2>
+          <ul class="bullet-list">
+            <li>Giữ boundary giữa handler, use case, persistence khi nó giúp thay đổi dễ hơn.</li>
+            <li>Đừng ép mọi package phải có interface chỉ vì template kiến trúc nói vậy.</li>
+            <li>Hãy tối ưu cho developer kế tiếp đọc code trong 5 phút, không phải cho sơ đồ đẹp trên slide.</li>
+          </ul>
+          <div class="callout">
+            <strong>Dấu hiệu over-engineering</strong>
+            Service chỉ có vài use case nhưng đã có quá nhiều interface, factory, adapter, module registration và naming ceremony.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Comparison</div>
+          <h2>So với ASP.NET Core, bạn đang trade-off gì</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>ASP.NET Core</th>
+                <th>Go</th>
+                <th>Trade-off</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Framework conventions dày</td>
+                <td>Nhẹ hơn, explicit hơn</td>
+                <td>Ít tiện nghi hơn nhưng ít magic hơn.</td>
+              </tr>
+              <tr>
+                <td>DI container rất mạnh</td>
+                <td>Wiring thủ công là mặc định</td>
+                <td>Composition root rõ, đổi lại hơi verbose.</td>
+              </tr>
+              <tr>
+                <td>Nhiều abstraction enterprise sẵn có</td>
+                <td>Chuộng concrete implementation</td>
+                <td>Buộc bạn quyết định abstraction muộn hơn.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-08-database-sql-transactions.html">
+              <span>Bài trước</span>
+              <strong>Database, SQL, transaction</strong>
+            </a>
+            <a href="lesson-10-middleware-auth-observability.html">
+              <span>Bài tiếp theo</span>
+              <strong>Middleware, auth, observability</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

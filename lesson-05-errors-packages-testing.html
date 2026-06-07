@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 5 - Error handling, package, testing</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-05-errors-packages-testing.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 05</div>
+      <h1>Error handling, package, testing</h1>
+      <p class="hero-copy">
+        Nếu bạn muốn viết Go đúng chất production, đây là phần không thể bỏ qua.
+        Go xử lý lỗi và tổ chức code rất khác .NET, nhưng khi quen rồi bạn sẽ thấy nó cực kỳ minh bạch.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: reliability</div>
+        <div class="meta-chip">Điểm nhấn: explicit errors</div>
+        <div class="meta-chip">Thực chiến: table-driven tests</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-04-types-structs-interfaces.html">Quay lại Bài 4</a>
+        <a class="button button-primary" href="lesson-06-concurrency-http-project.html">Tới Bài 6</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Error là giá trị</li>
+            <li>Wrap và inspect lỗi</li>
+            <li>Tổ chức package</li>
+            <li>Testing style trong Go</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Errors</div>
+          <h2>Go không giấu luồng lỗi sau exception mặc định</h2>
+          <div class="code-block" data-label="error-flow.go">
+            <pre><code>user, err := repo.GetByID(id)
+if err != nil {
+    return fmt.Errorf("load user %d: %w", id, err)
+}
+</code></pre>
+          </div>
+          <p>
+            Với người mới từ C#, đoạn `if err != nil` lặp lại có thể trông hơi dài. Nhưng bù lại,
+            luồng lỗi hiện ra ngay trên mặt code. Ở service và infra layer, đây là một lợi thế lớn cho việc đọc trace logic.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Wrapping</div>
+          <h2>Hãy wrap lỗi để thêm ngữ cảnh, nhưng đừng làm mất lỗi gốc</h2>
+          <div class="code-block" data-label="wrap-errors.go">
+            <pre><code>if err != nil {
+    return fmt.Errorf("save order: %w", err)
+}
+</code></pre>
+          </div>
+          <div class="code-block" data-label="inspect-errors.go">
+            <pre><code>if errors.Is(err, sql.ErrNoRows) {
+    return nil, ErrUserNotFound
+}
+</code></pre>
+          </div>
+          <p>
+            Cách nghĩ tương đương trong .NET sẽ gần với việc preserve inner exception và thêm message context,
+            nhưng Go làm điều này theo hướng đơn giản hơn và rất dễ scan bằng mắt.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Packages</div>
+          <h2>Tổ chức package theo boundary thực dụng, không cần tái hiện solution tree của .NET</h2>
+          <ul class="bullet-list">
+            <li>Bắt đầu nhỏ: package theo domain hoặc capability thay vì chia lớp n-level quá sớm.</li>
+            <li>Tránh tạo package chỉ để chứa một abstraction chưa có người dùng rõ ràng.</li>
+            <li>Ưu tiên dependency direction đơn giản, import graph dễ nhìn, tránh vòng lặp package.</li>
+          </ul>
+          <div class="callout">
+            <strong>Gợi ý cho người từ clean architecture</strong>
+            Bạn vẫn có thể giữ boundary rõ ràng, nhưng nên làm bằng package gọn và constructor explicit thay vì dựng framework nội bộ sớm.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Testing</div>
+          <h2>Table-driven test là idiom rất phổ biến</h2>
+          <div class="code-block" data-label="math_test.go">
+            <pre><code>func TestAdd(t *testing.T) {
+    tests := []struct {
+        name string
+        a    int
+        b    int
+        want int
+    }{
+        {name: "positive numbers", a: 2, b: 3, want: 5},
+        {name: "zero", a: 0, b: 0, want: 0},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := Add(tt.a, tt.b)
+            if got != tt.want {
+                t.Fatalf("want %d, got %d", tt.want, got)
+            }
+        })
+    }
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu bạn quen xUnit/NUnit + `[Theory]`, thì table-driven test là phiên bản Go-idiomatic của tư duy đó.
+            Nó đơn giản, rõ data setup, và scale khá tốt cho logic thuần.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Takeaway</div>
+          <h2>3 nguyên tắc nên giữ khi viết Go production</h2>
+          <ul class="bullet-list">
+            <li>Error phải rõ ngữ cảnh, đừng trả lỗi trần trụi khi đi qua nhiều lớp.</li>
+            <li>Package tree nên tối ưu cho khả năng đọc và dependency direction, không phải cho “độ đẹp lý thuyết”.</li>
+            <li>Test nhỏ, trực diện, data-driven thường phù hợp hơn những test harness quá nặng.</li>
+          </ul>
+
+          <div class="next-nav">
+            <a href="lesson-04-types-structs-interfaces.html">
+              <span>Bài trước</span>
+              <strong>Struct, method, interface</strong>
+            </a>
+            <a href="lesson-06-concurrency-http-project.html">
+              <span>Bài tiếp theo</span>
+              <strong>Concurrency, HTTP và mini service</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 10 - Middleware, auth, observability</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-10-middleware-auth-observability.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 10</div>
+      <h1>Middleware, auth, observability</h1>
+      <p class="hero-copy">
+        Sau khi đã có service cơ bản, bạn cần quan tâm đến các concern cắt ngang:
+        request pipeline, authentication, request ID, metrics, tracing và cách tắt service an toàn.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: cross-cutting concerns</div>
+        <div class="meta-chip">Điểm nhấn: middleware chain</div>
+        <div class="meta-chip">Mục tiêu: dễ vận hành</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-09-project-structure-dependency-wiring.html">Quay lại Bài 9</a>
+        <a class="button button-primary" href="lesson-11-integration-testing-benchmarking.html">Tới Bài 11</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Middleware pipeline</li>
+            <li>Auth cơ bản</li>
+            <li>Metrics và tracing</li>
+            <li>Graceful shutdown</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Middleware</div>
+          <h2>Middleware là nơi gom concern cắt ngang, nhưng đừng nhồi business logic vào đó</h2>
+          <div class="code-block" data-label="middleware.go">
+            <pre><code>func Logging(next http.Handler, logger *slog.Logger) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        next.ServeHTTP(w, r)
+        logger.Info("request completed",
+            "method", r.Method,
+            "path", r.URL.Path,
+            "duration_ms", time.Since(start).Milliseconds(),
+        )
+    })
+}
+</code></pre>
+          </div>
+          <p>
+            Hãy dùng middleware cho logging, tracing, auth gate, request ID, recovery và rate limiting.
+            Còn business rule nên ở handler hoặc service layer, nếu không pipeline sẽ sớm khó đọc.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Authentication</div>
+          <h2>Auth trong Go thường explicit hơn, ít “được framework lo sẵn” hơn ASP.NET Core</h2>
+          <ul class="bullet-list">
+            <li>JWT, API key hoặc session đều có thể làm tốt, nhưng wiring sẽ rõ bằng code thay vì config-driven nhiều lớp.</li>
+            <li>Phân biệt rõ authentication và authorization, đừng gộp chung trong một middleware khổng lồ.</li>
+            <li>Khi auth phức tạp, hãy tách parser token, principal builder và policy check thành phần riêng.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Observability</div>
+          <h2>Log thôi chưa đủ, production cần cả metrics và trace</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Loại tín hiệu</th>
+                <th>Dùng để làm gì</th>
+                <th>Ví dụ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Logs</td>
+                <td>Xem chi tiết event cụ thể</td>
+                <td>Error context, payload summary, request lifecycle</td>
+              </tr>
+              <tr>
+                <td>Metrics</td>
+                <td>Quan sát xu hướng hệ thống</td>
+                <td>RPS, latency, error rate, queue depth</td>
+              </tr>
+              <tr>
+                <td>Traces</td>
+                <td>Theo dõi request xuyên nhiều service</td>
+                <td>Latency breakdown, dependency bottleneck</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout">
+            <strong>Nguyên tắc thực chiến</strong>
+            Nếu service gọi database, cache, message broker hoặc downstream HTTP khác, trace sẽ giúp bạn tìm bottleneck nhanh hơn log rất nhiều.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Shutdown</div>
+          <h2>Graceful shutdown là phần rất nên làm chuẩn từ sớm</h2>
+          <div class="code-block" data-label="shutdown.go">
+            <pre><code>ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+go func() {
+    &lt;-ctx.Done()
+    shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    _ = server.Shutdown(shutdownCtx)
+}()
+</code></pre>
+          </div>
+          <p>
+            Trong môi trường container hoặc Kubernetes, đây không phải “nice to have”. Nó là phần giúp request đang chạy,
+            connection đang mở và background job có cơ hội kết thúc đúng cách trước khi process chết.
+          </p>
+
+          <div class="next-nav">
+            <a href="lesson-09-project-structure-dependency-wiring.html">
+              <span>Bài trước</span>
+              <strong>Project structure và dependency wiring</strong>
+            </a>
+            <a href="lesson-11-integration-testing-benchmarking.html">
+              <span>Bài tiếp theo</span>
+              <strong>Integration testing, benchmark, profiling</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

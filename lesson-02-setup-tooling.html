@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 2 - Cài đặt, module, tooling</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-02-setup-tooling.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 02</div>
+      <h1>Cài đặt, module, tooling</h1>
+      <p class="hero-copy">
+        Bài này giúp bạn thiết lập môi trường Go theo cách sạch sẽ và gần với workflow quen thuộc của một .NET developer:
+        tạo project, restore dependency, chạy app, format code và hiểu các lệnh nền tảng.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: setup</div>
+        <div class="meta-chip">Mức độ: beginner</div>
+        <div class="meta-chip">Đầu ra: chạy được project đầu tiên</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-01-foundations.html">Quay lại Bài 1</a>
+        <a class="button button-primary" href="lesson-03-syntax-control-flow.html">Tới Bài 3</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Nội dung</h3>
+          <ol class="toc-list">
+            <li>Cài Go</li>
+            <li>Hiểu `go mod`</li>
+            <li>Tạo project đầu tiên</li>
+            <li>Nhóm lệnh cơ bản</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Installation</div>
+          <h2>Bắt đầu bằng bản cài chính thức và editor quen tay</h2>
+          <p>
+            Hãy cài Go bản stable mới nhất từ trang chính thức, sau đó dùng VS Code với extension Go hoặc GoLand nếu bạn
+            thích trải nghiệm IDE sâu hơn. Nếu xuất phát từ Rider / Visual Studio, bạn sẽ thấy tooling của Go nhẹ hơn,
+            ít wizard hơn, nhưng tốc độ phản hồi rất tốt.
+          </p>
+          <div class="callout-grid">
+            <div class="callout">
+              <strong>Khuyến nghị editor</strong>
+              VS Code + Go extension là đủ mạnh cho phần lớn workflow: run, debug, test, format, rename, navigation.
+            </div>
+            <div class="callout">
+              <strong>Tư duy setup</strong>
+              Go ít phụ thuộc IDE-specific magic hơn .NET. CLI chính là “source of truth”.
+            </div>
+            <div class="callout">
+              <strong>Điểm cộng lớn</strong>
+              Cài xong thường là dùng được ngay, không phải bootstrap runtime phức tạp.
+            </div>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Modules</div>
+          <h2>`go mod` là tương đương gần nhất với project file + NuGet dependency graph</h2>
+          <p>
+            Trong .NET bạn có `.csproj`, `PackageReference`, `dotnet restore`. Trong Go, phần này nằm ở `go.mod`
+            và `go.sum`. File `go.mod` định nghĩa module name, version Go và dependency trực tiếp. `go.sum`
+            giữ checksum để đảm bảo tính nhất quán khi restore package.
+          </p>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>.NET</th>
+                <th>Go</th>
+                <th>Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>.csproj</td>
+                <td>go.mod</td>
+                <td>Định danh project/module và dependency chính.</td>
+              </tr>
+              <tr>
+                <td>NuGet lock / assets</td>
+                <td>go.sum</td>
+                <td>Lưu checksum dependency đã resolve.</td>
+              </tr>
+              <tr>
+                <td>`dotnet restore`</td>
+                <td>`go mod tidy` / auto fetch</td>
+                <td>Go thường tự fetch khi build, nhưng `tidy` rất quan trọng để dọn dependency.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">First Project</div>
+          <h2>Tạo ứng dụng console đầu tiên</h2>
+          <div class="code-block" data-label="Terminal">
+            <pre><code>go mod init github.com/yourname/go-for-dotnet
+touch main.go
+go run .
+</code></pre>
+          </div>
+          <div class="code-block" data-label="main.go">
+            <pre><code>package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from Go")
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu so với .NET, bạn có thể hình dung `package main` giống như entry assembly, còn `func main()`
+            là entry point. Không có class `Program` bắt buộc. Go bỏ hết ceremony không cần thiết ở bước này.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Command Map</div>
+          <h2>Những lệnh bạn sẽ dùng hằng ngày</h2>
+          <div class="code-block" data-label="CLI Cheat Sheet">
+            <pre><code>go run .          // chạy ứng dụng
+go build .        // build binary
+go test ./...     // chạy toàn bộ test
+go fmt ./...      // format code
+go mod tidy       // dọn dependency và sync go.mod/go.sum
+go get package    // thêm hoặc nâng dependency
+</code></pre>
+          </div>
+          <div class="cards-2">
+            <div class="mini-card">
+              <h3>`go fmt` gần như là bắt buộc</h3>
+              <p>Go culture rất coi trọng formatting thống nhất. Tranh luận style ít hơn rất nhiều so với nhiều ecosystem khác.</p>
+            </div>
+            <div class="mini-card">
+              <h3>`go test ./...` là lệnh quen thuộc</h3>
+              <p>Hãy nghĩ nó như cách quét toàn solution, nhưng theo package tree thay vì project graph kiểu .NET.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Takeaway</div>
+          <h2>Điểm cần nhớ sau bài này</h2>
+          <ul class="bullet-list">
+            <li>Go CLI là trung tâm workflow, IDE chỉ là lớp hỗ trợ.</li>
+            <li>`go.mod` và `go.sum` là phần bạn cần hiểu thật sớm.</li>
+            <li>Project Go đầu tiên rất ít ceremony, điều này là có chủ ý.</li>
+            <li>Hãy xem `go fmt` và `go mod tidy` như kỷ luật nền tảng của team.</li>
+          </ul>
+
+          <div class="next-nav">
+            <a href="lesson-01-foundations.html">
+              <span>Bài trước</span>
+              <strong>Go mindset cho .NET developer</strong>
+            </a>
+            <a href="lesson-03-syntax-control-flow.html">
+              <span>Bài tiếp theo</span>
+              <strong>Cú pháp nền tảng và control flow</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

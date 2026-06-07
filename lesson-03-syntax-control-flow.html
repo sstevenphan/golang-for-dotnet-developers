@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 3 - Cú pháp nền tảng và control flow</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-03-syntax-control-flow.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 03</div>
+      <h1>Cú pháp nền tảng và control flow</h1>
+      <p class="hero-copy">
+        Sau khi setup xong, đây là lúc bạn làm quen với những viên gạch đầu tiên của Go:
+        khai báo biến, function, slice, map, loop, `if`, `switch` và `defer`.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: syntax</div>
+        <div class="meta-chip">Điểm nhấn: idiomatic Go</div>
+        <div class="meta-chip">Nên học kỹ: slice và error-first flow</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-02-setup-tooling.html">Quay lại Bài 2</a>
+        <a class="button button-primary" href="lesson-04-types-structs-interfaces.html">Tới Bài 4</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Variable và function</li>
+            <li>Array, slice, map</li>
+            <li>`if`, `for`, `switch`</li>
+            <li>`defer` là gì</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Variables</div>
+          <h2>Khai báo biến trong Go rất gọn, nhưng phải hiểu ngữ cảnh dùng</h2>
+          <div class="code-block" data-label="variables.go">
+            <pre><code>var name string = "gopher"
+var count int
+
+language := "Go"
+isReady := true
+</code></pre>
+          </div>
+          <p>
+            `:=` là short variable declaration, cực kỳ phổ biến trong thân hàm. Còn `var` thường dùng khi bạn muốn
+            khai báo tường minh kiểu hoặc khi giá trị zero-value có ý nghĩa. Tư duy này khác với C# ở chỗ zero-value
+            được tận dụng nhiều hơn thay vì luôn khởi tạo đầy đủ.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Functions</div>
+          <h2>Function có thể trả nhiều giá trị, đây là một feature bạn sẽ dùng rất thường xuyên</h2>
+          <div class="code-block" data-label="functions.go">
+            <pre><code>func divide(a int, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+
+    return a / b, nil
+}
+</code></pre>
+          </div>
+          <p>
+            Multi-return làm thay đổi cách bạn thiết kế API so với C#. Thay vì phải tạo result object nhỏ cho mọi thứ,
+            Go cho phép trả dữ liệu chính và lỗi ngay trong chữ ký hàm. Điều này cực kỳ quan trọng ở các bài sau.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Collections</div>
+          <h2>Array ít dùng, slice mới là collection bạn sẽ sống cùng mỗi ngày</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Loại</th>
+                <th>Mô tả</th>
+                <th>So với .NET</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Array</td>
+                <td>Độ dài cố định, là value type theo đúng nghĩa</td>
+                <td>Ít giống `T[]` trong C# hơn bạn nghĩ.</td>
+              </tr>
+              <tr>
+                <td>Slice</td>
+                <td>View linh hoạt trên underlying array, có length và capacity</td>
+                <td>Gần với collection động, nhưng cơ chế bộ nhớ riêng.</td>
+              </tr>
+              <tr>
+                <td>Map</td>
+                <td>Hash map built-in</td>
+                <td>Gần với `Dictionary<TKey, TValue>`.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="code-block" data-label="slice-map.go">
+            <pre><code>numbers := []int{1, 2, 3}
+numbers = append(numbers, 4)
+
+scores := map[string]int{
+    "alice": 92,
+    "bob":   88,
+}
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Control Flow</div>
+          <h2>Go chỉ có một loop keyword là `for`</h2>
+          <div class="code-block" data-label="control-flow.go">
+            <pre><code>for i := 0; i &lt; 3; i++ {
+    fmt.Println(i)
+}
+
+for index, value := range numbers {
+    fmt.Println(index, value)
+}
+
+if total := len(numbers); total == 0 {
+    fmt.Println("empty")
+}
+
+switch role {
+case "admin":
+    fmt.Println("full access")
+case "user":
+    fmt.Println("limited access")
+default:
+    fmt.Println("unknown role")
+}
+</code></pre>
+          </div>
+          <p>
+            `if` có thể khai báo biến cục bộ ngay trong điều kiện, và `switch` mặc định không fallthrough.
+            Những chi tiết nhỏ này khiến code Go gọn, ít ceremony hơn nhiều chỗ trong C#.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Defer</div>
+          <h2>`defer` là primitive rất đáng nhớ</h2>
+          <div class="code-block" data-label="defer.go">
+            <pre><code>file, err := os.Open("data.txt")
+if err != nil {
+    return err
+}
+defer file.Close()
+</code></pre>
+          </div>
+          <p>
+            Hãy xem `defer` như cách close resource an toàn, gọn và rất “near the acquisition site”.
+            Nó không giống `using` block hoàn toàn, nhưng giải quyết cùng nhóm vấn đề: cleanup tài nguyên đúng lúc.
+          </p>
+          <div class="callout">
+            <strong>Điểm cần thuộc lòng</strong>
+            Nếu đang học Go từ C#, hãy dành thời gian hiểu thật kỹ `slice`, multi-return và `defer`.
+            Đây là ba thứ làm đổi nhịp code của bạn rõ nhất ở giai đoạn đầu.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-02-setup-tooling.html">
+              <span>Bài trước</span>
+              <strong>Cài đặt, module, tooling</strong>
+            </a>
+            <a href="lesson-04-types-structs-interfaces.html">
+              <span>Bài tiếp theo</span>
+              <strong>Struct, method, interface</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

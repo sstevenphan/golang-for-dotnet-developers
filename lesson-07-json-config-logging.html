@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 7 - JSON, config, environment, logging</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-07-json-config-logging.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 07</div>
+      <h1>JSON, config, environment, logging</h1>
+      <p class="hero-copy">
+        Từ bài này trở đi, chúng ta chuyển sang góc nhìn production service. Bạn sẽ học cách đưa dữ liệu đi vào,
+        cấu hình ứng dụng, và viết log sao cho hệ thống dễ vận hành thay vì chỉ chạy được trên máy local.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: application plumbing</div>
+        <div class="meta-chip">Điểm nhấn: env-first config</div>
+        <div class="meta-chip">Mục tiêu: log có cấu trúc</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-06-concurrency-http-project.html">Quay lại Bài 6</a>
+        <a class="button button-primary" href="lesson-08-database-sql-transactions.html">Tới Bài 8</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>JSON binding</li>
+            <li>Struct tag</li>
+            <li>Config từ environment</li>
+            <li>Structured logging</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">JSON</div>
+          <h2>Go làm JSON mapping qua `encoding/json` và struct tag</h2>
+          <div class="code-block" data-label="user_dto.go">
+            <pre><code>type CreateUserRequest struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu bạn quen DTO trong ASP.NET Core, đây là ý tưởng tương tự nhưng tối giản hơn. Không có data annotation
+            giàu tính năng mặc định như trong .NET; thay vào đó bạn thường tách rõ parse input, validate và business rules.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Binding</div>
+          <h2>Parse request body một cách explicit và kiểm soát lỗi ngay tại handler</h2>
+          <div class="code-block" data-label="handler.go">
+            <pre><code>var req CreateUserRequest
+if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil {
+    http.Error(w, "invalid json body", http.StatusBadRequest)
+    return
+}
+</code></pre>
+          </div>
+          <p>
+            Trong Go, parse và validate thường hiện ngay trong handler hoặc một lớp mỏng gần handler. Bạn sẽ ít thấy
+            model binding magic hơn ASP.NET Core, nhưng đổi lại luồng dữ liệu cực kỳ rõ ràng.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Configuration</div>
+          <h2>Tư duy config trong Go thường đi theo env-first và constructor rõ ràng</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>.NET</th>
+                <th>Go</th>
+                <th>Ý nghĩa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>`appsettings.json` + Options</td>
+                <td>Environment variables + config struct</td>
+                <td>Gọn hơn cho container và deploy cloud-native.</td>
+              </tr>
+              <tr>
+                <td>Configuration providers phong phú</td>
+                <td>Thường giữ config pipeline rất mỏng</td>
+                <td>Ít framework magic, nhiều explicit setup.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="code-block" data-label="config.go">
+            <pre><code>type Config struct {
+    HTTPPort string
+    DBConn   string
+    LogLevel string
+}
+
+func LoadConfig() Config {
+    return Config{
+        HTTPPort: getEnv("HTTP_PORT", "8080"),
+        DBConn:   getEnv("DB_CONN", ""),
+        LogLevel: getEnv("LOG_LEVEL", "info"),
+    }
+}
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Logging</div>
+          <h2>Đừng log theo kiểu chuỗi tự do quá sớm, hãy nghĩ theo event có key-value</h2>
+          <div class="code-block" data-label="logging.go">
+            <pre><code>logger.Info("user created",
+    "user_id", user.ID,
+    "email", user.Email,
+    "source", "http",
+)
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Structured logging giúp filter, search và correlate dễ hơn khi chạy thật.</li>
+            <li>Log nên gắn business context vừa đủ, không spam toàn bộ object.</li>
+            <li>Phân biệt rõ log cho operational event và log cho error path.</li>
+          </ul>
+          <div class="callout">
+            <strong>Rule of thumb</strong>
+            Hãy log để người trực ca production hiểu chuyện gì xảy ra sau 20 giây đọc log, không phải để dev local “cảm thấy yên tâm”.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-06-concurrency-http-project.html">
+              <span>Bài trước</span>
+              <strong>Concurrency, HTTP và mini service</strong>
+            </a>
+            <a href="lesson-08-database-sql-transactions.html">
+              <span>Bài tiếp theo</span>
+              <strong>Database, SQL, transaction</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

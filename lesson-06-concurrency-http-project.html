@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 6 - Concurrency, HTTP và mini service</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-06-concurrency-http-project.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 06</div>
+      <h1>Concurrency, HTTP và mini service</h1>
+      <p class="hero-copy">
+        Bài cuối của chặng nhập môn tập trung vào thứ làm Go nổi bật:
+        concurrency thực dụng và khả năng dựng HTTP service gọn, rõ, chạy tốt trong môi trường cloud-native.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: concurrency</div>
+        <div class="meta-chip">Thực hành: HTTP service</div>
+        <div class="meta-chip">Kết thúc chặng nhập môn</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-05-errors-packages-testing.html">Quay lại Bài 5</a>
+        <a class="button button-primary" href="lesson-07-json-config-logging.html">Tới Bài 7</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Goroutine là gì</li>
+            <li>Channel để phối hợp</li>
+            <li>`context` để cancel</li>
+            <li>Dựng HTTP service nhỏ</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Concurrency</div>
+          <h2>Goroutine là đơn vị concurrent execution cực nhẹ</h2>
+          <div class="code-block" data-label="goroutines.go">
+            <pre><code>go func() {
+    fmt.Println("running in background")
+}()
+</code></pre>
+          </div>
+          <p>
+            Nếu bạn quen `Task.Run`, hãy xem goroutine như primitive nền thấp hơn và rẻ hơn. Điểm khác biệt là
+            Go thiết kế cả ngôn ngữ và runtime để concurrency là chuyện bình thường, không phải lớp abstraction phụ thêm.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Channels</div>
+          <h2>Channel giúp các goroutine giao tiếp với nhau một cách có cấu trúc</h2>
+          <div class="code-block" data-label="channels.go">
+            <pre><code>messages := make(chan string)
+
+go func() {
+    messages &lt;- "done"
+}()
+
+msg := &lt;-messages
+fmt.Println(msg)
+</code></pre>
+          </div>
+          <p>
+            Bạn không phải lúc nào cũng cần channel. Nhiều trường hợp `sync.WaitGroup`, mutex hoặc worker pool đơn giản
+            sẽ phù hợp hơn. Nhưng channel rất mạnh khi bạn muốn mô hình hóa dữ liệu chảy qua các stage xử lý.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Context</div>
+          <h2>`context.Context` là thứ bạn phải dùng đúng ngay từ đầu</h2>
+          <div class="code-block" data-label="context.go">
+            <pre><code>ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+defer cancel()
+
+result, err := client.Fetch(ctx)
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Dùng `context` để propagate timeout, cancellation, request-scoped data thật tiết chế.</li>
+            <li>Đừng cất `context` trong struct lâu dài.</li>
+            <li>Với HTTP service, `r.Context()` là gốc quan trọng để downstream operation biết khi request bị huỷ.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">HTTP Service</div>
+          <h2>Một service Go nhỏ có thể rất thẳng và dễ đọc</h2>
+          <div class="code-block" data-label="main.go">
+            <pre><code>mux := http.NewServeMux()
+
+mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    _, _ = w.Write([]byte("ok"))
+})
+
+server := &amp;http.Server{
+    Addr:    ":8080",
+    Handler: mux,
+}
+
+log.Fatal(server.ListenAndServe())
+</code></pre>
+          </div>
+          <p>
+            Với .NET developer, đoạn này có thể khiến bạn ngạc nhiên vì mức độ “ít framework” của nó.
+            Nhưng đó chính là điểm hay: phần cơ bản đã đủ dùng cho rất nhiều API nội bộ và service nhỏ.
+            Khi cần nâng cấp, bạn mới bổ sung middleware, config, logging, routing nâng cao hoặc framework phụ trợ.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Next Stage</div>
+          <h2>Sau bài này, bạn bước sang chặng production</h2>
+          <ul class="bullet-list">
+            <li>Bài 7 sẽ đưa bạn vào JSON binding, config từ môi trường và structured logging.</li>
+            <li>Bài 8 và 9 đi sâu vào SQL, transaction, package boundary và dependency wiring.</li>
+            <li>Bài 10 và 11 tập trung vào middleware, auth, observability, integration testing và profiling.</li>
+            <li>Bài 12 khép series bằng deployment, runtime tuning và roadmap học tiếp.</li>
+          </ul>
+          <div class="callout">
+            <strong>Checkpoint quan trọng</strong>
+            Nếu đã nắm được 6 bài đầu, bạn đã có nền để đọc và hiểu phần lớn service Go cỡ nhỏ. Chặng tiếp theo sẽ giúp
+            bạn chuyển từ “biết ngôn ngữ” sang “biết vận hành nó trong môi trường production”.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-05-errors-packages-testing.html">
+              <span>Bài trước</span>
+              <strong>Error handling, package, testing</strong>
+            </a>
+            <a href="lesson-07-json-config-logging.html">
+              <span>Bài tiếp theo</span>
+              <strong>JSON, config, environment, logging</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-07-json-config-logging.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 7 - JSON, config, environment, logging</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-07-json-config-logging.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 07</div>
+      <h1>JSON, config, environment, logging</h1>
+      <p class="hero-copy">
+        Từ bài này trở đi, chúng ta chuyển sang góc nhìn production service. Bạn sẽ học cách đưa dữ liệu đi vào,
+        cấu hình ứng dụng, và viết log sao cho hệ thống dễ vận hành thay vì chỉ chạy được trên máy local.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: application plumbing</div>
+        <div class="meta-chip">Điểm nhấn: env-first config</div>
+        <div class="meta-chip">Mục tiêu: log có cấu trúc</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-06-concurrency-http-project.html">Quay lại Bài 6</a>
+        <a class="button button-primary" href="lesson-08-database-sql-transactions.html">Tới Bài 8</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>JSON binding</li>
+            <li>Struct tag</li>
+            <li>Config từ environment</li>
+            <li>Structured logging</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">JSON</div>
+          <h2>Go làm JSON mapping qua `encoding/json` và struct tag</h2>
+          <div class="code-block" data-label="user_dto.go">
+            <pre><code>type CreateUserRequest struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu bạn quen DTO trong ASP.NET Core, đây là ý tưởng tương tự nhưng tối giản hơn. Không có data annotation
+            giàu tính năng mặc định như trong .NET; thay vào đó bạn thường tách rõ parse input, validate và business rules.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Binding</div>
+          <h2>Parse request body một cách explicit và kiểm soát lỗi ngay tại handler</h2>
+          <div class="code-block" data-label="handler.go">
+            <pre><code>var req CreateUserRequest
+if err := json.NewDecoder(r.Body).Decode(&amp;req); err != nil {
+    http.Error(w, "invalid json body", http.StatusBadRequest)
+    return
+}
+</code></pre>
+          </div>
+          <p>
+            Trong Go, parse và validate thường hiện ngay trong handler hoặc một lớp mỏng gần handler. Bạn sẽ ít thấy
+            model binding magic hơn ASP.NET Core, nhưng đổi lại luồng dữ liệu cực kỳ rõ ràng.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Configuration</div>
+          <h2>Tư duy config trong Go thường đi theo env-first và constructor rõ ràng</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>.NET</th>
+                <th>Go</th>
+                <th>Ý nghĩa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>`appsettings.json` + Options</td>
+                <td>Environment variables + config struct</td>
+                <td>Gọn hơn cho container và deploy cloud-native.</td>
+              </tr>
+              <tr>
+                <td>Configuration providers phong phú</td>
+                <td>Thường giữ config pipeline rất mỏng</td>
+                <td>Ít framework magic, nhiều explicit setup.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="code-block" data-label="config.go">
+            <pre><code>type Config struct {
+    HTTPPort string
+    DBConn   string
+    LogLevel string
+}
+
+func LoadConfig() Config {
+    return Config{
+        HTTPPort: getEnv("HTTP_PORT", "8080"),
+        DBConn:   getEnv("DB_CONN", ""),
+        LogLevel: getEnv("LOG_LEVEL", "info"),
+    }
+}
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Logging</div>
+          <h2>Đừng log theo kiểu chuỗi tự do quá sớm, hãy nghĩ theo event có key-value</h2>
+          <div class="code-block" data-label="logging.go">
+            <pre><code>logger.Info("user created",
+    "user_id", user.ID,
+    "email", user.Email,
+    "source", "http",
+)
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Structured logging giúp filter, search và correlate dễ hơn khi chạy thật.</li>
+            <li>Log nên gắn business context vừa đủ, không spam toàn bộ object.</li>
+            <li>Phân biệt rõ log cho operational event và log cho error path.</li>
+          </ul>
+          <div class="callout">
+            <strong>Rule of thumb</strong>
+            Hãy log để người trực ca production hiểu chuyện gì xảy ra sau 20 giây đọc log, không phải để dev local “cảm thấy yên tâm”.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-06-concurrency-http-project.html">
+              <span>Bài trước</span>
+              <strong>Concurrency, HTTP và mini service</strong>
+            </a>
+            <a href="lesson-08-database-sql-transactions.html">
+              <span>Bài tiếp theo</span>
+              <strong>Database, SQL, transaction</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-08-database-sql-transactions.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 8 - Database, SQL, transaction</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-08-database-sql-transactions.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 08</div>
+      <h1>Database, SQL, transaction</h1>
+      <p class="hero-copy">
+        Với người đến từ Entity Framework, đây là bước chuyển tư duy rất lớn. Go khuyến khích bạn gần SQL hơn,
+        hiểu transaction boundary rõ hơn và chấp nhận explicit data access thay vì dựa nhiều vào ORM abstraction.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: persistence</div>
+        <div class="meta-chip">Điểm nhấn: SQL-first</div>
+        <div class="meta-chip">Mục tiêu: transaction rõ boundary</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-07-json-config-logging.html">Quay lại Bài 7</a>
+        <a class="button button-primary" href="lesson-09-project-structure-dependency-wiring.html">Tới Bài 9</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>`database/sql` là gì</li>
+            <li>Query và scan</li>
+            <li>Transaction boundary</li>
+            <li>Khi nào cần abstraction</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">SQL-first</div>
+          <h2>Trong Go, biết SQL tốt thường quan trọng hơn biết một ORM kỳ diệu</h2>
+          <p>
+            Bạn vẫn có thể dùng ORM hoặc query builder, nhưng nền tảng của hệ sinh thái Go là `database/sql`.
+            Nó cho bạn control rõ ràng hơn về query, connection pool, transaction và mapping dữ liệu.
+          </p>
+          <div class="quote">
+            <strong>Chuyển mental model:</strong>
+            Từ “domain model dẫn dắt query” sang “query dẫn dắt shape dữ liệu mà use case cần”.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Query</div>
+          <h2>Đọc dữ liệu bằng query explicit và scan vào struct nhỏ</h2>
+          <div class="code-block" data-label="users_repo.go">
+            <pre><code>row := db.QueryRowContext(ctx,
+    `select id, name, email from users where id = $1`,
+    id,
+)
+
+var user User
+if err := row.Scan(&amp;user.ID, &amp;user.Name, &amp;user.Email); err != nil {
+    return User{}, err
+}
+</code></pre>
+          </div>
+          <p>
+            Nếu so với EF Core, phần này ít “developer comfort” hơn nhưng lại rất minh bạch: bạn biết chính xác
+            query gì chạy, cột nào được đọc, object nào được map, và chi phí truy cập nằm ở đâu.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Transactions</div>
+          <h2>Transaction nên gắn với use case, không gắn mù quáng với từng repository call</h2>
+          <div class="code-block" data-label="transactions.go">
+            <pre><code>tx, err := db.BeginTx(ctx, nil)
+if err != nil {
+    return err
+}
+defer tx.Rollback()
+
+if err := ordersRepo.Insert(ctx, tx, order); err != nil {
+    return err
+}
+
+if err := auditRepo.Insert(ctx, tx, auditEvent); err != nil {
+    return err
+}
+
+return tx.Commit()
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Transaction là concern của application flow hoặc use case, không chỉ của database helper.</li>
+            <li>Đừng mở transaction quá sớm rồi giữ quá lâu qua I/O ngoài database.</li>
+            <li>Nếu cần atomicity, hãy làm cho boundary đó thật lộ rõ trong code.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Abstraction</div>
+          <h2>Khi nào nên thêm repository abstraction mạnh hơn</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Khuyến nghị</th>
+                <th>Lý do</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Service nhỏ, query ít</td>
+                <td>Giữ repository mỏng</td>
+                <td>Giảm ceremony, dễ lần theo query thật.</td>
+              </tr>
+              <tr>
+                <td>Logic persistence phức tạp</td>
+                <td>Tách repository rõ hơn</td>
+                <td>Dễ thay đổi và test theo capability.</td>
+              </tr>
+              <tr>
+                <td>Nhiều query lặp lại</td>
+                <td>Dùng helper hoặc code generation</td>
+                <td>Giảm boilerplate nhưng vẫn giữ SQL visible.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-07-json-config-logging.html">
+              <span>Bài trước</span>
+              <strong>JSON, config, environment, logging</strong>
+            </a>
+            <a href="lesson-09-project-structure-dependency-wiring.html">
+              <span>Bài tiếp theo</span>
+              <strong>Project structure và dependency wiring</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-09-project-structure-dependency-wiring.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 9 - Project structure và dependency wiring</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-09-project-structure-dependency-wiring.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 09</div>
+      <h1>Project structure và dependency wiring</h1>
+      <p class="hero-copy">
+        Đây là bài trả lời câu hỏi mà nhiều senior .NET developer sẽ hỏi rất sớm:
+        “Nếu không có solution nhiều project và DI container mạnh tay, tôi tổ chức code thế nào cho sạch?”
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: architecture</div>
+        <div class="meta-chip">Điểm nhấn: constructor wiring</div>
+        <div class="meta-chip">Mục tiêu: clean vừa đủ</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-08-database-sql-transactions.html">Quay lại Bài 8</a>
+        <a class="button button-primary" href="lesson-10-middleware-auth-observability.html">Tới Bài 10</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Package theo boundary</li>
+            <li>Constructor injection bằng tay</li>
+            <li>Clean architecture vừa đủ</li>
+            <li>Khi nào project bị over-engineered</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Structure</div>
+          <h2>Bắt đầu từ package theo capability, đừng tái tạo nguyên solution tree của .NET</h2>
+          <div class="code-block" data-label="example-layout.txt">
+            <pre><code>/cmd/api
+/internal/user
+/internal/order
+/internal/platform/db
+/internal/platform/httpserver
+</code></pre>
+          </div>
+          <p>
+            Một project Go production tốt thường có ít tầng hình thức hơn bạn quen trong .NET.
+            Điều quan trọng là dependency direction rõ, package name gọn, và người đọc nhìn vào là đoán được trách nhiệm.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Wiring</div>
+          <h2>Constructor injection bằng tay thường đã đủ cho đa số service</h2>
+          <div class="code-block" data-label="wire.go">
+            <pre><code>userRepo := user.NewRepository(db)
+userService := user.NewService(userRepo, logger)
+userHandler := user.NewHandler(userService, logger)
+</code></pre>
+          </div>
+          <p>
+            Đúng là bạn mất tính “auto resolve” của DI container, nhưng bạn có được một composition root cực rõ.
+            Điều này giúp debug dependency graph nhanh hơn và tránh framework coupling không cần thiết.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Architecture</div>
+          <h2>Clean architecture trong Go nên là discipline, không phải nghi thức</h2>
+          <ul class="bullet-list">
+            <li>Giữ boundary giữa handler, use case, persistence khi nó giúp thay đổi dễ hơn.</li>
+            <li>Đừng ép mọi package phải có interface chỉ vì template kiến trúc nói vậy.</li>
+            <li>Hãy tối ưu cho developer kế tiếp đọc code trong 5 phút, không phải cho sơ đồ đẹp trên slide.</li>
+          </ul>
+          <div class="callout">
+            <strong>Dấu hiệu over-engineering</strong>
+            Service chỉ có vài use case nhưng đã có quá nhiều interface, factory, adapter, module registration và naming ceremony.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Comparison</div>
+          <h2>So với ASP.NET Core, bạn đang trade-off gì</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>ASP.NET Core</th>
+                <th>Go</th>
+                <th>Trade-off</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Framework conventions dày</td>
+                <td>Nhẹ hơn, explicit hơn</td>
+                <td>Ít tiện nghi hơn nhưng ít magic hơn.</td>
+              </tr>
+              <tr>
+                <td>DI container rất mạnh</td>
+                <td>Wiring thủ công là mặc định</td>
+                <td>Composition root rõ, đổi lại hơi verbose.</td>
+              </tr>
+              <tr>
+                <td>Nhiều abstraction enterprise sẵn có</td>
+                <td>Chuộng concrete implementation</td>
+                <td>Buộc bạn quyết định abstraction muộn hơn.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-08-database-sql-transactions.html">
+              <span>Bài trước</span>
+              <strong>Database, SQL, transaction</strong>
+            </a>
+            <a href="lesson-10-middleware-auth-observability.html">
+              <span>Bài tiếp theo</span>
+              <strong>Middleware, auth, observability</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-10-middleware-auth-observability.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 10 - Middleware, auth, observability</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-10-middleware-auth-observability.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 10</div>
+      <h1>Middleware, auth, observability</h1>
+      <p class="hero-copy">
+        Sau khi đã có service cơ bản, bạn cần quan tâm đến các concern cắt ngang:
+        request pipeline, authentication, request ID, metrics, tracing và cách tắt service an toàn.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: cross-cutting concerns</div>
+        <div class="meta-chip">Điểm nhấn: middleware chain</div>
+        <div class="meta-chip">Mục tiêu: dễ vận hành</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-09-project-structure-dependency-wiring.html">Quay lại Bài 9</a>
+        <a class="button button-primary" href="lesson-11-integration-testing-benchmarking.html">Tới Bài 11</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Middleware pipeline</li>
+            <li>Auth cơ bản</li>
+            <li>Metrics và tracing</li>
+            <li>Graceful shutdown</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Middleware</div>
+          <h2>Middleware là nơi gom concern cắt ngang, nhưng đừng nhồi business logic vào đó</h2>
+          <div class="code-block" data-label="middleware.go">
+            <pre><code>func Logging(next http.Handler, logger *slog.Logger) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        next.ServeHTTP(w, r)
+        logger.Info("request completed",
+            "method", r.Method,
+            "path", r.URL.Path,
+            "duration_ms", time.Since(start).Milliseconds(),
+        )
+    })
+}
+</code></pre>
+          </div>
+          <p>
+            Hãy dùng middleware cho logging, tracing, auth gate, request ID, recovery và rate limiting.
+            Còn business rule nên ở handler hoặc service layer, nếu không pipeline sẽ sớm khó đọc.
+          </p>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Authentication</div>
+          <h2>Auth trong Go thường explicit hơn, ít “được framework lo sẵn” hơn ASP.NET Core</h2>
+          <ul class="bullet-list">
+            <li>JWT, API key hoặc session đều có thể làm tốt, nhưng wiring sẽ rõ bằng code thay vì config-driven nhiều lớp.</li>
+            <li>Phân biệt rõ authentication và authorization, đừng gộp chung trong một middleware khổng lồ.</li>
+            <li>Khi auth phức tạp, hãy tách parser token, principal builder và policy check thành phần riêng.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Observability</div>
+          <h2>Log thôi chưa đủ, production cần cả metrics và trace</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Loại tín hiệu</th>
+                <th>Dùng để làm gì</th>
+                <th>Ví dụ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Logs</td>
+                <td>Xem chi tiết event cụ thể</td>
+                <td>Error context, payload summary, request lifecycle</td>
+              </tr>
+              <tr>
+                <td>Metrics</td>
+                <td>Quan sát xu hướng hệ thống</td>
+                <td>RPS, latency, error rate, queue depth</td>
+              </tr>
+              <tr>
+                <td>Traces</td>
+                <td>Theo dõi request xuyên nhiều service</td>
+                <td>Latency breakdown, dependency bottleneck</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout">
+            <strong>Nguyên tắc thực chiến</strong>
+            Nếu service gọi database, cache, message broker hoặc downstream HTTP khác, trace sẽ giúp bạn tìm bottleneck nhanh hơn log rất nhiều.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Shutdown</div>
+          <h2>Graceful shutdown là phần rất nên làm chuẩn từ sớm</h2>
+          <div class="code-block" data-label="shutdown.go">
+            <pre><code>ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+go func() {
+    &lt;-ctx.Done()
+    shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    _ = server.Shutdown(shutdownCtx)
+}()
+</code></pre>
+          </div>
+          <p>
+            Trong môi trường container hoặc Kubernetes, đây không phải “nice to have”. Nó là phần giúp request đang chạy,
+            connection đang mở và background job có cơ hội kết thúc đúng cách trước khi process chết.
+          </p>
+
+          <div class="next-nav">
+            <a href="lesson-09-project-structure-dependency-wiring.html">
+              <span>Bài trước</span>
+              <strong>Project structure và dependency wiring</strong>
+            </a>
+            <a href="lesson-11-integration-testing-benchmarking.html">
+              <span>Bài tiếp theo</span>
+              <strong>Integration testing, benchmark, profiling</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-11-integration-testing-benchmarking.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 11 - Integration testing, benchmark, profiling</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-11-integration-testing-benchmarking.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 11</div>
+      <h1>Integration testing, benchmark, profiling</h1>
+      <p class="hero-copy">
+        Production quality không chỉ là compile pass. Bài này giúp bạn kiểm thử service theo cách thực tế hơn:
+        chạy integration tests, benchmark, race detector và profile để nhìn đúng vấn đề hiệu năng.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: quality engineering</div>
+        <div class="meta-chip">Điểm nhấn: test gần thực tế</div>
+        <div class="meta-chip">Mục tiêu: tối ưu có số liệu</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-10-middleware-auth-observability.html">Quay lại Bài 10</a>
+        <a class="button button-primary" href="lesson-12-deployment-performance-roadmap.html">Tới Bài 12</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Unit vs integration tests</li>
+            <li>HTTP test server</li>
+            <li>Benchmark và race detector</li>
+            <li>Profiling</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Testing Strategy</div>
+          <h2>Đừng chỉ test hàm nhỏ, hãy test cả luồng request thật</h2>
+          <p>
+            Vì Go code thường explicit và ít framework magic, integration test bằng HTTP test server tương đối nhẹ.
+            Đây là cơ hội tốt để kiểm thử gần production hơn mà không cần harness quá đồ sộ.
+          </p>
+          <div class="code-block" data-label="handler_integration_test.go">
+            <pre><code>server := httptest.NewServer(mux)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/health")
+if err != nil {
+    t.Fatal(err)
+}
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Benchmarks</div>
+          <h2>Go benchmark rất tiện để đo chi phí của hot path</h2>
+          <div class="code-block" data-label="bench_test.go">
+            <pre><code>func BenchmarkNormalizeEmail(b *testing.B) {
+    for i := 0; i &lt; b.N; i++ {
+        NormalizeEmail(" Demo@Example.com ")
+    }
+}
+</code></pre>
+          </div>
+          <ul class="bullet-list">
+            <li>Benchmark tốt khi bạn đã có giả thuyết về bottleneck.</li>
+            <li>Đừng benchmark cả hệ thống một cách mù mờ rồi rút kết luận lớn.</li>
+            <li>Ưu tiên benchmark hàm thuần, parser, serializer hoặc đoạn xử lý được gọi cực nhiều.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Race Detector</div>
+          <h2>`go test -race` là công cụ rất nên bật với code concurrent</h2>
+          <p>
+            Với bài toán goroutine, shared state và cache, race detector có thể giúp bạn bắt bug mà code review rất dễ bỏ sót.
+            Đây là một lợi thế lớn trong runtime/tooling của Go, đặc biệt khi service của bạn bắt đầu có background workers.
+          </p>
+          <div class="callout">
+            <strong>Thói quen tốt</strong>
+            Mỗi khi chạm vào concurrency đáng kể, hãy chạy test với race detector ít nhất ở local hoặc CI cho vùng code đó.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Profiling</div>
+          <h2>Chỉ tối ưu sau khi đã có profile hoặc số liệu đủ tin cậy</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Công cụ</th>
+                <th>Mục đích</th>
+                <th>Khi dùng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Benchmark</td>
+                <td>Đo throughput/latency của đoạn code nhỏ</td>
+                <td>Khi nghi ngờ hot path cụ thể</td>
+              </tr>
+              <tr>
+                <td>Race detector</td>
+                <td>Bắt data race</td>
+                <td>Khi có shared mutable state hoặc goroutine phức tạp</td>
+              </tr>
+              <tr>
+                <td>Profiler</td>
+                <td>Xem CPU, memory, allocation</td>
+                <td>Khi service chậm hoặc tốn tài nguyên thật</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="next-nav">
+            <a href="lesson-10-middleware-auth-observability.html">
+              <span>Bài trước</span>
+              <strong>Middleware, auth, observability</strong>
+            </a>
+            <a href="lesson-12-deployment-performance-roadmap.html">
+              <span>Bài tiếp theo</span>
+              <strong>Deployment, performance, roadmap tiếp theo</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
+*** Add File: lesson-12-deployment-performance-roadmap.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 12 - Deployment, performance, roadmap tiếp theo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-12-deployment-performance-roadmap.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 12</div>
+      <h1>Deployment, performance, roadmap tiếp theo</h1>
+      <p class="hero-copy">
+        Bài cuối khép lại series bằng góc nhìn vận hành và phát triển dài hạn:
+        build binary, container hóa, tinh chỉnh runtime, và cách tiếp tục đi sâu để dùng Go tự tin trong production.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Chủ đề: production readiness</div>
+        <div class="meta-chip">Điểm nhấn: deploy đơn giản</div>
+        <div class="meta-chip">Mục tiêu: roadmap sau series</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="lesson-11-integration-testing-benchmarking.html">Quay lại Bài 11</a>
+        <a class="button button-primary" href="index.html">Về trang chủ</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trọng tâm</h3>
+          <ol class="toc-list">
+            <li>Build và container</li>
+            <li>Runtime tuning</li>
+            <li>Go phù hợp khi nào</li>
+            <li>Roadmap học tiếp</li>
+          </ol>
+        </div>
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Deployment</div>
+          <h2>Một trong những điểm mạnh rõ nhất của Go là deployment rất thẳng</h2>
+          <ul class="bullet-list">
+            <li>Build ra binary đơn, dễ đóng gói vào container nhỏ.</li>
+            <li>Startup nhanh, đặc biệt phù hợp cho job, worker, internal API và microservice.</li>
+            <li>Ít phụ thuộc runtime setup phức tạp ở môi trường đích.</li>
+          </ul>
+          <div class="code-block" data-label="build-and-run.txt">
+            <pre><code>go build -o app ./cmd/api
+./app
+</code></pre>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Performance</div>
+          <h2>Tối ưu Go cũng cần kỷ luật như tối ưu .NET: đo trước, sửa sau</h2>
+          <p>
+            Việc Go nhanh không có nghĩa mọi code Go đều tự động hiệu quả. Allocation thừa, query dở, log quá nặng,
+            goroutine vô tội vạ hoặc contention cao vẫn khiến hệ thống xuống sức như thường.
+          </p>
+          <div class="quote">
+            <strong>Nguyên tắc giữ bình tĩnh:</strong>
+            Đừng tối ưu vì ngôn ngữ “có vẻ nhanh”. Hãy tối ưu vì profile cho thấy điểm nghẽn cụ thể.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Choosing Go</div>
+          <h2>Khi nào nên chọn Go thay vì tiếp tục ở lại .NET</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Tình huống</th>
+                <th>Go rất hợp</th>
+                <th>.NET vẫn rất mạnh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Microservice và infra tooling</td>
+                <td>Rất hợp</td>
+                <td>Vẫn tốt nếu team và platform đang đồng nhất .NET</td>
+              </tr>
+              <tr>
+                <td>Enterprise app framework-heavy</td>
+                <td>Không luôn là lựa chọn số 1</td>
+                <td>.NET thường giàu ecosystem hơn</td>
+              </tr>
+              <tr>
+                <td>Cloud-native worker, gateway, background job</td>
+                <td>Thường rất đáng cân nhắc</td>
+                <td>.NET cũng làm được, nhưng Go thường cho cảm giác tối giản hơn</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Roadmap</div>
+          <h2>Sau series này, bạn nên làm gì để giỏi Go thật sự</h2>
+          <ul class="bullet-list">
+            <li>Tự build một service CRUD hoàn chỉnh có auth, SQL, migrations, structured logging và integration test.</li>
+            <li>Đọc vài codebase Go production để quen naming, package boundary và error flow thực tế.</li>
+            <li>Học thêm gRPC, message queue, cache, OpenTelemetry và CI/CD cho service Go.</li>
+            <li>So sánh lại các quyết định kiến trúc bạn thường làm trong .NET và hỏi: ở Go, cái nào thật sự còn cần?</li>
+          </ul>
+          <div class="callout">
+            <strong>Kết luận cuối cùng</strong>
+            Nếu C# cho bạn sức mạnh biểu đạt và hệ sinh thái dày, thì Go cho bạn sự đơn giản vận hành và tốc độ đưa service vào production.
+            Biết cả hai sẽ khiến bạn chọn công cụ tỉnh táo hơn cho từng bài toán.
+          </div>
+
+          <div class="next-nav">
+            <a href="lesson-11-integration-testing-benchmarking.html">
+              <span>Bài trước</span>
+              <strong>Integration testing, benchmark, profiling</strong>
+            </a>
+            <a href="index.html">
+              <span>Hoàn thành series</span>
+              <strong>Quay về roadmap tổng</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>

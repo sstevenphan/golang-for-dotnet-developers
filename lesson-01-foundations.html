@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 1 - Go mindset cho .NET developer</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body data-page="lesson-01-foundations.html">
+  <div class="site-shell">
+    <header class="article-hero">
+      <div class="eyebrow">Lesson 01</div>
+      <h1>Go mindset cho .NET developer</h1>
+      <p class="hero-copy">
+        Trước khi học cú pháp, bạn cần hiểu triết lý của Go. Đây là phần quan trọng nhất để tránh mang nguyên cả
+        tư duy C# sang và rồi thấy Go “thiếu tính năng”.
+      </p>
+      <div class="article-meta">
+        <div class="meta-chip">Nền tảng: từ con số 0</div>
+        <div class="meta-chip">Góc nhìn: senior .NET engineer</div>
+        <div class="meta-chip">Mục tiêu: đúng mental model</div>
+      </div>
+      <div class="article-actions">
+        <a class="button button-secondary" href="index.html">Quay về trang chủ</a>
+        <a class="button button-primary" href="lesson-02-setup-tooling.html">Tới Bài 2</a>
+      </div>
+    </header>
+
+    <main class="article-layout">
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <h3>Trong bài này</h3>
+          <ol class="toc-list">
+            <li>Go được tối ưu cho điều gì</li>
+            <li>Khác biệt tư duy so với C#</li>
+            <li>Khi nào Go rất hợp</li>
+            <li>Điều cần “unlearn” sớm</li>
+          </ol>
+        </div>
+
+        <div class="sidebar-group">
+          <h3>Mốc hoàn thành</h3>
+          <button class="button button-primary mark-complete" type="button" data-complete-lesson>
+            Đánh dấu đã học xong
+          </button>
+        </div>
+      </aside>
+
+      <article class="article">
+        <section class="article-section">
+          <div class="eyebrow">Core Idea</div>
+          <h2>Go ưu tiên độ đơn giản vận hành hơn độ giàu biểu đạt</h2>
+          <p>
+            C# là ngôn ngữ rất “feature-rich”: generics mạnh, LINQ, attribute, reflection, async/await, inheritance,
+            pattern matching, source generators, ecosystem cực dày. Go đi theo hướng gần như ngược lại: số lượng
+            concept ít hơn, cú pháp ngắn hơn, compile nhanh, binary gọn để deploy, và codebase dễ đọc khi đội ngũ lớn.
+          </p>
+          <div class="quote">
+            <strong>Tư duy quan trọng:</strong>
+            Trong Go, “ít khả năng diễn đạt hơn” không phải khiếm khuyết. Nó là cách ngôn ngữ ép team đi về những
+            pattern dễ đọc, dễ maintain, dễ onboard.
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Mental Shift</div>
+          <h2>Bạn sẽ thấy Go khác C# ở đâu nhiều nhất</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>C# / .NET</th>
+                <th>Go</th>
+                <th>Ý nghĩa thực tế</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Class-centric, OOP mạnh</td>
+                <td>Struct + function + interface nhỏ</td>
+                <td>Thiết kế theo composition, ít hierarchy hơn.</td>
+              </tr>
+              <tr>
+                <td>Exception là cơ chế lỗi chính</td>
+                <td>Return `error` tường minh</td>
+                <td>Luồng lỗi hiện rõ ngay trong hàm gọi.</td>
+              </tr>
+              <tr>
+                <td>`async/await`</td>
+                <td>Goroutine + channel + context</td>
+                <td>Concurrency là primitive nền tảng, không chỉ là syntax sugar.</td>
+              </tr>
+              <tr>
+                <td>Interface thường được thiết kế trước</td>
+                <td>Interface thường nhỏ và xuất hiện phía consumer</td>
+                <td>Giảm coupling sớm, tránh over-abstraction.</td>
+              </tr>
+              <tr>
+                <td>Nhiều pattern enterprise sẵn có</td>
+                <td>Chuộng sự trực tiếp, rõ ràng</td>
+                <td>Nhiều chỗ không cần factory/service abstraction dày đặc.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Use Cases</div>
+          <h2>Khi nào Go thường là lựa chọn rất đáng giá</h2>
+          <div class="cards-2">
+            <div class="mini-card">
+              <h3>Backend service hiệu năng ổn định</h3>
+              <p>API service, background worker, queue consumer, gateway, data pipeline, internal tooling.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Cloud-native deployment</h3>
+              <p>Build ra một binary, container gọn, startup nhanh, vận hành đơn giản trong môi trường microservice.</p>
+            </div>
+          </div>
+          <div class="cards-2">
+            <div class="mini-card">
+              <h3>Hệ thống cần concurrency tự nhiên</h3>
+              <p>Streaming, fan-out/fan-in, polling nhiều nguồn, I/O nặng nhưng logic không quá “enterprise framework-heavy”.</p>
+            </div>
+            <div class="mini-card">
+              <h3>Team cần code dễ đọc</h3>
+              <p>Go rất mạnh ở tính nhất quán. Nhiều codebase Go nhìn khá giống nhau, nên onboarding nhanh.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">Unlearn</div>
+          <h2>5 thói quen từ .NET nên bỏ sớm khi học Go</h2>
+          <ul class="bullet-list">
+            <li>Đừng vội tạo quá nhiều interface. Trong Go, interface nhỏ và xuất hiện khi có nhu cầu thật.</li>
+            <li>Đừng cố dựng class hierarchy. `struct` + embedding + composition gần như luôn đủ.</li>
+            <li>Đừng chờ exception để quản lý lỗi. Hãy học cách kiểm tra `if err != nil` một cách bình tĩnh.</li>
+            <li>Đừng thiết kế mọi thứ theo generic abstraction từ đầu. Go chuộng code thẳng, cụ thể, rõ ý định.</li>
+            <li>Đừng xem verbosity của Go là lùi bước. Nó thường là chi phí nhỏ để đổi lấy tính minh bạch.</li>
+          </ul>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">First Impression</div>
+          <h2>Nếu phải tóm tắt Go cho một senior C# developer</h2>
+          <p>
+            Hãy nghĩ Go như một ngôn ngữ backend tối giản, được thiết kế để đội ngũ ship software đáng tin cậy nhanh hơn,
+            chứ không phải để biểu diễn mọi mô hình trừu tượng tinh vi. Nó không cố thay C# ở mọi nơi. Nhưng ở services,
+            tooling, cloud infra, data movement và concurrency thực dụng, Go cực kỳ mạnh.
+          </p>
+          <div class="callout">
+            <strong>Bài tập tư duy trước khi qua Bài 2</strong>
+            Hãy thử trả lời: nếu bỏ inheritance, exception-heavy flow và DI graph phức tạp, bạn sẽ tổ chức một service
+            nhỏ theo cách nào? Câu hỏi này sẽ theo bạn xuyên suốt track.
+          </div>
+
+          <div class="next-nav">
+            <a href="index.html">
+              <span>Trang chủ</span>
+              <strong>Xem toàn bộ lộ trình</strong>
+            </a>
+            <a href="lesson-02-setup-tooling.html">
+              <span>Bài tiếp theo</span>
+              <strong>Cài đặt, module, tooling</strong>
+            </a>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
