@@ -55,6 +55,21 @@
             thích trải nghiệm IDE sâu hơn. Nếu xuất phát từ Rider / Visual Studio, bạn sẽ thấy tooling của Go nhẹ hơn,
             ít wizard hơn, nhưng tốc độ phản hồi rất tốt.
           </p>
+          <div class="code-block" data-label="Windows Setup Checklist">
+            <pre><code>1. Tải bộ cài Go cho Windows từ trang chính thức
+2. Chạy installer mặc định
+3. Mở terminal mới
+4. Kiểm tra:
+
+go version
+go env GOPATH
+</code></pre>
+          </div>
+          <p>
+            Trên Windows, installer thường tự cấu hình `PATH` cho bạn. Nếu mở terminal mới mà `go version` chưa chạy được,
+            hãy kiểm tra lại biến môi trường `PATH` có chứa thư mục cài Go hay chưa. Với góc nhìn .NET developer,
+            bạn có thể xem bước này tương tự như kiểm tra `dotnet --info` sau khi cài .NET SDK.
+          </p>
           <div class="callout-grid">
             <div class="callout">
               <strong>Khuyến nghị editor</strong>
@@ -68,6 +83,41 @@
               <strong>Điểm cộng lớn</strong>
               Cài xong thường là dùng được ngay, không phải bootstrap runtime phức tạp.
             </div>
+          </div>
+        </section>
+
+        <section class="article-section">
+          <div class="eyebrow">First Verification</div>
+          <h2>Kiểm tra môi trường trước khi tạo project đầu tiên</h2>
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Lệnh</th>
+                <th>Kỳ vọng</th>
+                <th>Ý nghĩa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>`go version`</td>
+                <td>In ra version Go đang cài</td>
+                <td>Xác nhận CLI chạy được từ terminal.</td>
+              </tr>
+              <tr>
+                <td>`go env GOPATH`</td>
+                <td>In ra workspace mặc định</td>
+                <td>Xác nhận Go environment đã sẵn sàng.</td>
+              </tr>
+              <tr>
+                <td>`go env GOMOD`</td>
+                <td>Trước khi init thường trả về `NUL` hoặc rỗng</td>
+                <td>Cho thấy bạn chưa đứng trong một Go module.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout">
+            <strong>Rule of thumb</strong>
+            Nếu `go version` chưa chạy được thì đừng vội đi tiếp sang `go mod`. Hãy xử lý môi trường trước, vì toàn bộ workflow của Go xoay quanh CLI.
           </div>
         </section>
 
@@ -111,8 +161,11 @@
           <div class="eyebrow">First Project</div>
           <h2>Tạo ứng dụng console đầu tiên</h2>
           <div class="code-block" data-label="Terminal">
-            <pre><code>go mod init github.com/yourname/go-for-dotnet
-touch main.go
+            <pre><code>mkdir go-for-dotnet
+cd go-for-dotnet
+go mod init github.com/yourname/go-for-dotnet
+
+// tạo file main.go bằng editor
 go run .
 </code></pre>
           </div>
@@ -130,6 +183,10 @@ func main() {
             Nếu so với .NET, bạn có thể hình dung `package main` giống như entry assembly, còn `func main()`
             là entry point. Không có class `Program` bắt buộc. Go bỏ hết ceremony không cần thiết ở bước này.
           </p>
+          <div class="callout">
+            <strong>Lưu ý cho Windows</strong>
+            Mình cố ý không dùng `touch main.go` ở đây vì đó là thói quen Unix. Với máy Windows, cách tự nhiên nhất là tạo file bằng editor rồi dán đoạn `main.go` vào.
+          </div>
         </section>
 
         <section class="article-section">
